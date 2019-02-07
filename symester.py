@@ -62,6 +62,7 @@ class Symester:
                         distance += self.graph.get_edge_data(node, node_in_group)['distance']
                     if distance < min_distance:
                         optimal_node = node
+                        min_distance = distance
                 self.graph.node[optimal_node]['paired'] = True
                 group.append(optimal_node)
         for node in self._unpaired_nodes():
@@ -73,6 +74,7 @@ class Symester:
                     distance += self.graph.get_edge_data(node, node_in_group)['distance']
                 if distance < min_distance:
                     optimal_index = i
+                    min_distance = distance
             self.graph.node[node]['paired'] = True
             self.groups[optimal_index].append(node)
         return self.groups
