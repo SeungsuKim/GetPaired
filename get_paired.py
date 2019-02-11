@@ -1,5 +1,3 @@
-from symester import Symester
-
 class GetPaired:
 
     def __init__(self):
@@ -8,6 +6,11 @@ class GetPaired:
 
     def add_symester(self, symester):
         self.symesters.append(symester)
+
+    def get_symester_names(self):
+        def name(symester):
+            return symester.get_name()
+        return list(map(name, self.symesters))
 
     def is_symester_exists(self):
         return len(self.symesters) != 0

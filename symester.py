@@ -110,6 +110,4 @@ class Symester:
                     if node1 != node2 and not self.graph.get_edge_data(node1, node2)['updated']:
                         self.graph[node1][node2]['updated'] = True
                         self.graph[node1][node2]['distance'] += 1
-        self.print_graph()
-        self.draw_graph()
 
