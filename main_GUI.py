@@ -4,7 +4,10 @@ import pickle
 
 from get_paired import GetPaired
 from symester import Symester
-from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QLabel, QComboBox, QHBoxLayout, QVBoxLayout, QGridLayout, QPushButton
+from PyQt5.QtWidgets \
+    import QApplication, QWidget, QMainWindow, QLabel, \
+    QComboBox, QHBoxLayout, QVBoxLayout, QGridLayout, \
+    QPushButton, QTableWidget, QTableWidgetItem
 
 
 class InitialWindow(QWidget):
@@ -34,6 +37,7 @@ class InitialWindow(QWidget):
         cb_symester = QComboBox(self)
         cb_symester.clear()
         cb_symester.addItems(self.get_paired.get_symester_names())
+        cb_symester.activated.connect(self.mainWindow)
 
         grid_symester = QGridLayout()
         grid_symester.addWidget(lb_new_symester, 0, 0)
@@ -56,6 +60,46 @@ class InitialWindow(QWidget):
         self.setLayout(vbox)
         self.setGeometry(300, 300, 300, 150)
         self.show()
+
+    def mainWindow(self, index):
+        self.get_paired.set_cur_symester(index)
+        self.close()
+        self.next = MainWindow(self.get_paired)
+
+class MainWindow(QWidget):
+
+    def __init__(self, get_paired):
+        super().__init__()
+
+        self.get_paired = get_paired
+
+        self.initUI()
+
+    def initUI(self):
+        lb_cur_symester = QLabel(self.get_paired.cur_symester.get_name())
+
+        self.createMemberTable()
+
+        hbox_main = QHBoxLayout()
+        hbox_main.addWidget(self.memberTable)
+        hbox_main.addStretch(1)
+
+        vbox = QVBoxLayout()
+        vbox.addWidget(lb_cur_symester)
+        vbox.addLayout(hbox_main)
+
+        self.setLayout(vbox)
+        self.setGeometry(300, 300, 600, 400)
+        self.show()
+
+    def createMemberTable(self):
+        self.memberTable = QTableWidget()
+        self.memberTable.setColumnCount(1)
+        members = self.get_paired.cur_symester.get_members()
+        self.memberTable.setRowCount(len(members))
+        for i, member in enumerate(members):
+            item = QTableWidgetItem(member)
+            self.memberTable.setItem(i, 0, item)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

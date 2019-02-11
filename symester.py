@@ -38,6 +38,9 @@ class Symester:
                 raise TypeError("Members must be a list of string.")
         self.members += members
 
+    def get_members(self):
+        return self.members
+
     def draw_graph(self):
         nx.draw(self.graph, with_labels=True)
         plt.savefig("graph.png")
