@@ -7,7 +7,8 @@ from symester import Symester
 from PyQt5.QtWidgets \
     import QApplication, QWidget, QMainWindow, QLabel, \
     QComboBox, QHBoxLayout, QVBoxLayout, QGridLayout, \
-    QPushButton, QTableWidget, QTableWidgetItem
+    QPushButton, QTableWidget, QTableWidgetItem, QSpinBox
+from PyQt5 import QtCore, QtWidgets
 
 
 class InitialWindow(QWidget):
@@ -80,8 +81,22 @@ class MainWindow(QWidget):
 
         self.createMemberTable()
 
+        lb_group = QLabel('그룹 수 입력')
+        sb_group = QSpinBox()
+        sb_group.setMinimum(2)
+        sb_group.setMaximum(self.get_paired.cur_symester.get_num_members())
+
+        vbox_group = QVBoxLayout()
+        vbox_group.addStretch(1)
+        vbox_group.addWidget(lb_group)
+        vbox_group.addWidget(sb_group)
+        vbox_group.addStretch(1)
+
         hbox_main = QHBoxLayout()
+        hbox_main.addStretch(1)
         hbox_main.addWidget(self.memberTable)
+        hbox_main.addStretch(1)
+        hbox_main.addLayout(vbox_group)
         hbox_main.addStretch(1)
 
         vbox = QVBoxLayout()
@@ -94,12 +109,16 @@ class MainWindow(QWidget):
 
     def createMemberTable(self):
         self.memberTable = QTableWidget()
-        self.memberTable.setColumnCount(1)
+        header = self.memberTable.horizontalHeader()
+        header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
         members = self.get_paired.cur_symester.get_members()
+        self.memberTable.setColumnCount(1)
         self.memberTable.setRowCount(len(members))
         for i, member in enumerate(members):
             item = QTableWidgetItem(member)
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
             self.memberTable.setItem(i, 0, item)
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

@@ -3,6 +3,7 @@ import random
 import networkx as nx
 import matplotlib.pyplot as plt
 
+
 class Symester:
 
     def __init__(self):
@@ -40,6 +41,9 @@ class Symester:
 
     def get_members(self):
         return self.members
+
+    def get_num_members(self):
+        return len(self.members)
 
     def draw_graph(self):
         nx.draw(self.graph, with_labels=True)
