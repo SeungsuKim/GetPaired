@@ -3,11 +3,12 @@ import sys
 import pickle
 
 from get_paired import GetPaired
-from symester import Symester
+from resultTableModel import ResultTableModel
 from PyQt5.QtWidgets \
     import QApplication, QWidget, QMainWindow, QLabel, \
     QComboBox, QHBoxLayout, QVBoxLayout, QGridLayout, \
-    QPushButton, QTableWidget, QTableWidgetItem, QSpinBox
+    QPushButton, QTableWidget, QTableWidgetItem, QSpinBox, \
+    QTableView
 from PyQt5 import QtCore, QtWidgets
 
 
@@ -67,6 +68,7 @@ class InitialWindow(QWidget):
         self.close()
         self.next = MainWindow(self.get_paired)
 
+
 class MainWindow(QWidget):
 
     def __init__(self, get_paired):
@@ -82,14 +84,18 @@ class MainWindow(QWidget):
         self.createMemberTable()
 
         lb_group = QLabel('그룹 수 입력')
-        sb_group = QSpinBox()
-        sb_group.setMinimum(2)
-        sb_group.setMaximum(self.get_paired.cur_symester.get_num_members())
+        self.sb_group = QSpinBox()
+        self.sb_group.setMinimum(2)
+        self.sb_group.setMaximum(self.get_paired.cur_symester.get_num_members())
+        btn_done = QPushButton('완료')
+        btn_done.clicked.connect(self.resultWindow)
 
         vbox_group = QVBoxLayout()
         vbox_group.addStretch(1)
         vbox_group.addWidget(lb_group)
-        vbox_group.addWidget(sb_group)
+        vbox_group.addWidget(self.sb_group)
+        vbox_group.addStretch(1)
+        vbox_group.addWidget(btn_done)
         vbox_group.addStretch(1)
 
         hbox_main = QHBoxLayout()
@@ -118,6 +124,53 @@ class MainWindow(QWidget):
             item = QTableWidgetItem(member)
             item.setFlags(QtCore.Qt.ItemIsEnabled)
             self.memberTable.setItem(i, 0, item)
+
+    def resultWindow(self):
+        self.close()
+        self.next = ResultWindow(self.get_paired, self.sb_group.value())
+
+
+class ResultWindow(QWidget):
+
+    def __init__(self, get_paired, num_group):
+        super().__init__()
+
+        self.get_paired = get_paired
+        self.num_group = num_group
+
+        self.initUI()
+
+    def initUI(self):
+        btn_apply = QPushButton('적용')
+        btn_retry = QPushButton('재시도')
+        btn_retry.clicked.connect(self.retry)
+
+        hbox_btn = QHBoxLayout()
+        hbox_btn.addStretch(1)
+        hbox_btn.addWidget(btn_apply)
+        hbox_btn.addWidget(btn_retry)
+
+        groups = self.get_paired.cur_symester.make_pairs(self.num_group)
+        self.resultTableModel = ResultTableModel(self, groups)
+        self.resultTable = QTableView()
+        self.resultTable.setModel(self.resultTableModel)
+
+        vbox = QVBoxLayout()
+        vbox.addStretch(1)
+        vbox.addWidget(self.resultTable)
+        vbox.addStretch(1)
+        vbox.addLayout(hbox_btn)
+        vbox.addStretch(1)
+
+        self.setLayout(vbox)
+        self.setGeometry(300, 300, 600, 400)
+        self.show()
+
+    def retry(self):
+        groups = self.get_paired.cur_symester.make_pairs(self.num_group)
+        self.resultTableModel = ResultTableModel(self, groups)
+        self.resultTable.setModel(self.resultTableModel)
+        self.resultTable.update()
 
 
 if __name__ == '__main__':
