@@ -4,7 +4,8 @@ import pickle
 from copy import deepcopy
 
 from get_paired import GetPaired
-from tableModel import MemberTableModel, ResultTableModel
+from tableModel import MemberTableModel, ResultTableModel, \
+    AntiMemberTableModel
 from PyQt5.QtWidgets \
     import QApplication, QWidget, QMainWindow, QLabel, \
     QComboBox, QHBoxLayout, QVBoxLayout, QGridLayout, \
@@ -88,14 +89,38 @@ class MainWindow(QWidget):
         btn_done = QPushButton('완료')
         btn_done.clicked.connect(self.resultWindow)
 
-        vbox_group = QVBoxLayout()
-        vbox_group.addStretch(1)
-        vbox_group.addWidget(lb_group)
-        vbox_group.addWidget(self.sb_group)
-        vbox_group.addStretch(1)
-        vbox_group.addWidget(btn_done)
-        vbox_group.addStretch(1)
+        lb_anti = QLabel('서로 떨어뜨릴 인원')
+        self.antiMemberTableModel = AntiMemberTableModel(self)
+        self.antiMemberTable = QTableView()
+        self.antiMemberTable.setModel(self.antiMemberTableModel)
+        self.antiMemberTable.clicked.connect(self.antiMemberTableModel.itemClicked)
+        self.antiMemberTable.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        self.antiMemberTable.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
 
+        btn_add = QPushButton('추가')
+        btn_add.clicked.connect(self.addAntiMember)
+        btn_remove_anti = QPushButton('제거')
+        btn_remove_anti.clicked.connect(self.antiMemberTableModel.removeAntiMember)
+
+        hbox_btn_anti = QHBoxLayout()
+        hbox_btn_anti.addStretch(1)
+        hbox_btn_anti.addWidget(btn_add)
+        hbox_btn_anti.addWidget(btn_remove_anti)
+
+        hbox_group = QHBoxLayout()
+        hbox_group.addWidget(lb_group)
+        hbox_group.addStretch(1)
+        hbox_group.addWidget(self.sb_group)
+
+        vbox_group = QVBoxLayout()
+        vbox_group.addWidget(lb_anti)
+        vbox_group.addWidget(self.antiMemberTable)
+        vbox_group.addLayout(hbox_btn_anti)
+        vbox_group.addStretch(1)
+        vbox_group.addLayout(hbox_group)
+        vbox_group.addWidget(btn_done)
+
+        lb_members  = QLabel('짝활동 참여 인원')
         members = deepcopy(self.get_paired.cur_symester.get_members())
         self.memberTableModel = MemberTableModel(self, members)
         self.memberTable = QTableView()
@@ -108,14 +133,15 @@ class MainWindow(QWidget):
         btn_reset.clicked.connect(
             lambda: self.memberTableModel.resetMembers(deepcopy(self.get_paired.cur_symester.get_members())))
 
-        hbox_btn_remove = QHBoxLayout()
-        hbox_btn_remove.addStretch(1)
-        hbox_btn_remove.addWidget(btn_remove)
-        hbox_btn_remove.addWidget(btn_reset)
+        hbox_btn_member = QHBoxLayout()
+        hbox_btn_member.addStretch(1)
+        hbox_btn_member.addWidget(btn_remove)
+        hbox_btn_member.addWidget(btn_reset)
 
         vbox_table = QVBoxLayout()
+        vbox_table.addWidget(lb_members)
         vbox_table.addWidget(self.memberTable)
-        vbox_table.addLayout(hbox_btn_remove)
+        vbox_table.addLayout(hbox_btn_member)
 
         hbox_main = QHBoxLayout()
         hbox_main.addStretch(1)
@@ -131,6 +157,15 @@ class MainWindow(QWidget):
         self.setLayout(vbox)
         self.setGeometry(300, 300, 600, 400)
         self.show()
+
+    def addAntiMember(self):
+        if len(self.memberTableModel.checkedMembers) != 2:
+            err_dialog = QtWidgets.QErrorMessage()
+            err_dialog.showMessage('서로 떨어트릴 인원을 추가하기 위해서는 두 명의 인원을 선택해야합니다.')
+            print("error")
+            return
+        members = deepcopy(self.memberTableModel.checkedMembers)
+        self.antiMemberTableModel.addAntiMember(members)
 
     def resultWindow(self):
         self.close()
