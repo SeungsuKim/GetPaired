@@ -9,7 +9,9 @@ class ResultTableModel(QAbstractTableModel):
         self.groups = groups
 
     def setGroups(self, groups):
+        self.layoutAboutToBeChanged.emit()
         self.groups = groups
+        self.layoutChanged.emit()
 
     def rowCount(self, parent=None, *args, **kwargs):
         return max([len(group) for group in self.groups])

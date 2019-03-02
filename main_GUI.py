@@ -168,9 +168,8 @@ class ResultWindow(QWidget):
 
     def retry(self):
         groups = self.get_paired.cur_symester.make_pairs(self.num_group)
-        self.resultTableModel = ResultTableModel(self, groups)
-        self.resultTable.setModel(self.resultTableModel)
-        self.resultTable.update()
+        self.resultTableModel.setGroups(groups)
+        self.update()
 
 
 if __name__ == '__main__':
