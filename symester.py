@@ -93,6 +93,44 @@ class Symester:
             self.groups[optimal_index].append(node)
         return self.groups
 
+    def make_active_pairs(self, num_group):
+        self._init_graph()
+
+        seeds = random.sample(self.active_members, num_group)
+        for seed in seeds:
+            self.graph.node[seed]['paired'] = True
+            self.groups.append([seed])
+
+        while len(self._active_unpaired_nodes()) >= num_group:
+            for group in self.groups:
+                active_unpaired_nodes = self._active_unpaired_nodes()
+                if len(active_unpaired_nodes) == 0:
+                    break
+                optimal_node = ""
+                min_distance = 999999999
+                for node in active_unpaired_nodes:
+                    distance = 0
+                    for node_in_group in group:
+                        distance += self.graph.get_edge_data(node, node_in_group)['distance']
+                    if distance < min_distance:
+                        optimal_node = node
+                        min_distance = distance
+                self.graph.node[optimal_node]['paired'] = True
+                group.append(optimal_node)
+        for node in self._active_unpaired_nodes():
+            optimal_index = 0
+            min_distance = 999999999
+            for i, group in enumerate(self.groups):
+                distance = 0
+                for node_in_group in group:
+                    distance += self.graph.get_edge_data(node, node_in_group)['distance']
+                if distance < min_distance:
+                    optimal_index = i
+                    min_distance = distance
+            self.graph.node[node]['paired'] = True
+            self.groups[optimal_index].append(node)
+        return self.groups
+
     def _init_graph(self):
         nx.set_node_attributes(self.graph, False, 'paired')
         nx.set_edge_attributes(self.graph, False, 'updated')
@@ -103,6 +141,14 @@ class Symester:
         for node in self.graph.nodes(data='paired'):
             if not node[1]:
                 unpaired_nodes.append(node[0])
+        return unpaired_nodes
+
+    def _active_unpaired_nodes(self):
+        unpaired_nodes = []
+        for node in self.graph.nodes(data='paired'):
+            if not node[1] and node[0] in self.active_members:
+                unpaired_nodes.append(node[0])
+        print(unpaired_nodes)
         return unpaired_nodes
 
     def print_groups(self):

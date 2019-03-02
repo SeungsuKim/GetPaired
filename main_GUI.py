@@ -105,7 +105,8 @@ class MainWindow(QWidget):
         btn_remove = QPushButton('삭제')
         btn_remove.clicked.connect(self.memberTableModel.removeCheckedMembers)
         btn_reset = QPushButton('초기화')
-        btn_reset.clicked.connect(lambda: self.memberTableModel.resetMembers(deepcopy(self.get_paired.cur_symester.get_members())))
+        btn_reset.clicked.connect(
+            lambda: self.memberTableModel.resetMembers(deepcopy(self.get_paired.cur_symester.get_members())))
 
         hbox_btn_remove = QHBoxLayout()
         hbox_btn_remove.addStretch(1)
@@ -133,7 +134,7 @@ class MainWindow(QWidget):
 
     def resultWindow(self):
         self.close()
-        self.get_paired.active_members = self.memberTableModel.members
+        self.get_paired.cur_symester.active_members = self.memberTableModel.members
         self.next = ResultWindow(self.get_paired, self.sb_group.value())
 
 
@@ -160,7 +161,7 @@ class ResultWindow(QWidget):
         hbox_btn.addWidget(btn_apply)
         hbox_btn.addWidget(btn_retry)
 
-        groups = self.get_paired.cur_symester.make_pairs(self.num_group)
+        groups = self.get_paired.cur_symester.make_active_pairs(self.num_group)
         self.resultTableModel = ResultTableModel(self, groups)
         self.resultTable = QTableView()
         self.resultTable.setModel(self.resultTableModel)
@@ -176,7 +177,7 @@ class ResultWindow(QWidget):
         self.show()
 
     def retry(self):
-        groups = self.get_paired.cur_symester.make_pairs(self.num_group)
+        groups = self.get_paired.cur_symester.make_active_pairs(self.num_group)
         self.resultTableModel.setGroups(groups)
 
     def mainWindow(self):
