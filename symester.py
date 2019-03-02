@@ -9,6 +9,7 @@ class Symester:
     def __init__(self):
         self.name = ""
         self.members = []
+        self.active_members = []
         self.graph = nx.Graph()
         self.groups = []
 
@@ -44,6 +45,12 @@ class Symester:
 
     def get_num_members(self):
         return len(self.members)
+
+    def get_active_members(self):
+        return self.active_members
+
+    def get_num_active_members(self):
+        return len(self.active_members)
 
     def draw_graph(self):
         nx.draw(self.graph, with_labels=True)

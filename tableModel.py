@@ -9,6 +9,7 @@ class MemberTableModel(QAbstractTableModel):
 
         self.members = members
         self.isChecked = [False] * len(self.members)
+        self.checkedItems = []
 
     def rowCount(self, parent=None, *args, **kwargs):
         return len(self.members)
@@ -31,11 +32,34 @@ class MemberTableModel(QAbstractTableModel):
 
     def itemClicked(self, item):
         self.layoutAboutToBeChanged.emit()
-        self.isChecked[item.row()] = not self.isChecked[item.row()]
+
+        if self.isChecked[item.row()]:
+            self.isChecked[item.row()] = False
+            self.checkedItems.remove(item)
+        else:
+            self.isChecked[item.row()] = True
+            self.checkedItems.append(item)
+
         self.layoutChanged.emit()
 
     def removeCheckedMembers(self):
-        pass
+        self.layoutAboutToBeChanged.emit()
+
+        for item in self.checkedItems:
+            self.members.remove(str(item.data()))
+        self.isChecked = [False] * len(self.members)
+        self.checkedItems = []
+
+        self.layoutChanged.emit()
+
+    def resetMembers(self, members):
+        self.layoutAboutToBeChanged.emit()
+
+        self.members = members
+        self.isChecked = [False] * len(self.members)
+        self.checkedItems = []
+
+        self.layoutChanged.emit()
 
 
 class ResultTableModel(QAbstractTableModel):

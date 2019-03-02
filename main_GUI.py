@@ -1,6 +1,7 @@
 import os
 import sys
 import pickle
+from copy import deepcopy
 
 from get_paired import GetPaired
 from tableModel import MemberTableModel, ResultTableModel
@@ -95,7 +96,7 @@ class MainWindow(QWidget):
         vbox_group.addWidget(btn_done)
         vbox_group.addStretch(1)
 
-        members = self.get_paired.cur_symester.get_members()
+        members = deepcopy(self.get_paired.cur_symester.get_members())
         self.memberTableModel = MemberTableModel(self, members)
         self.memberTable = QTableView()
         self.memberTable.setModel(self.memberTableModel)
@@ -103,10 +104,13 @@ class MainWindow(QWidget):
         self.memberTable.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
         btn_remove = QPushButton('삭제')
         btn_remove.clicked.connect(self.memberTableModel.removeCheckedMembers)
+        btn_reset = QPushButton('초기화')
+        btn_reset.clicked.connect(lambda: self.memberTableModel.resetMembers(deepcopy(self.get_paired.cur_symester.get_members())))
 
         hbox_btn_remove = QHBoxLayout()
         hbox_btn_remove.addStretch(1)
         hbox_btn_remove.addWidget(btn_remove)
+        hbox_btn_remove.addWidget(btn_reset)
 
         vbox_table = QVBoxLayout()
         vbox_table.addWidget(self.memberTable)
@@ -129,6 +133,7 @@ class MainWindow(QWidget):
 
     def resultWindow(self):
         self.close()
+        self.get_paired.active_members = self.memberTableModel.members
         self.next = ResultWindow(self.get_paired, self.sb_group.value())
 
 
@@ -146,8 +151,11 @@ class ResultWindow(QWidget):
         btn_apply = QPushButton('적용')
         btn_retry = QPushButton('재시도')
         btn_retry.clicked.connect(self.retry)
+        btn_back = QPushButton('뒤로')
+        btn_back.clicked.connect(self.mainWindow)
 
         hbox_btn = QHBoxLayout()
+        hbox_btn.addWidget(btn_back)
         hbox_btn.addStretch(1)
         hbox_btn.addWidget(btn_apply)
         hbox_btn.addWidget(btn_retry)
@@ -160,11 +168,8 @@ class ResultWindow(QWidget):
         self.resultTable.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
 
         vbox = QVBoxLayout()
-        #vbox.addStretch(1)
         vbox.addWidget(self.resultTable)
-        #vbox.addStretch(1)
         vbox.addLayout(hbox_btn)
-        #vbox.addStretch(1)
 
         self.setLayout(vbox)
         self.setGeometry(300, 300, 600, 400)
@@ -174,6 +179,9 @@ class ResultWindow(QWidget):
         groups = self.get_paired.cur_symester.make_pairs(self.num_group)
         self.resultTableModel.setGroups(groups)
 
+    def mainWindow(self):
+        self.close()
+        self.next = MainWindow(self.get_paired)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
