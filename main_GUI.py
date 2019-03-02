@@ -154,6 +154,7 @@ class ResultWindow(QWidget):
         self.resultTableModel = ResultTableModel(self, groups)
         self.resultTable = QTableView()
         self.resultTable.setModel(self.resultTableModel)
+        self.resultTable.clicked.connect(self.resultTableModel.itemClicked)
 
         vbox = QVBoxLayout()
         vbox.addStretch(1)
