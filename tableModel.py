@@ -2,6 +2,42 @@ from PyQt5.QtCore import QAbstractTableModel
 from PyQt5.QtCore import Qt
 
 
+class MemberTableModel(QAbstractTableModel):
+
+    def __init__(self, parent, members):
+        QAbstractTableModel.__init__(self, parent)
+
+        self.members = members
+        self.isChecked = [False] * len(self.members)
+
+    def rowCount(self, parent=None, *args, **kwargs):
+        return len(self.members)
+
+    def columnCount(self, parent=None, *args, **kwargs):
+        return 1
+
+    def data(self, index, role):
+        if not index.isValid():
+            return None
+        if role == Qt.DisplayRole or role == Qt.EditRole:
+            return self.members[index.row()]
+        elif role == Qt.CheckStateRole:
+            if self.isChecked[index.row()]:
+                return Qt.Checked
+            else:
+                return Qt.Unchecked
+        elif role == Qt.TextAlignmentRole:
+            return Qt.AlignCenter
+
+    def itemClicked(self, item):
+        self.layoutAboutToBeChanged.emit()
+        self.isChecked[item.row()] = not self.isChecked[item.row()]
+        self.layoutChanged.emit()
+
+    def removeCheckedMembers(self):
+        pass
+
+
 class ResultTableModel(QAbstractTableModel):
 
     def __init__(self, parent, groups):
@@ -41,8 +77,6 @@ class ResultTableModel(QAbstractTableModel):
 
     def itemClicked(self, item):
         self.layoutAboutToBeChanged.emit()
-
         self.isChecked[item.column()][item.row()] = \
             not self.isChecked[item.column()][item.row()]
-
         self.layoutChanged.emit()
