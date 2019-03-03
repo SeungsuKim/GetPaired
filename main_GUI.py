@@ -7,11 +7,10 @@ from get_paired import GetPaired
 from tableModel import MemberTableModel, ResultTableModel, \
     AntiMemberTableModel
 from PyQt5.QtWidgets \
-    import QApplication, QWidget, QMainWindow, QLabel, \
-    QComboBox, QHBoxLayout, QVBoxLayout, QGridLayout, \
-    QPushButton, QTableWidget, QTableWidgetItem, QSpinBox, \
-    QTableView, QErrorMessage, QMessageBox
-from PyQt5 import QtCore, QtWidgets
+    import QApplication, QWidget, QLabel, QComboBox, \
+    QHBoxLayout, QVBoxLayout, QGridLayout, \
+    QPushButton, QSpinBox, QTableView, QMessageBox
+from PyQt5 import QtWidgets
 
 
 class InitialWindow(QWidget):
@@ -185,6 +184,8 @@ class ResultWindow(QWidget):
         self.initUI()
 
     def initUI(self):
+        btn_exchange = QPushButton('교체')
+        btn_exchange.clicked.connect(self.exchange)
         btn_apply = QPushButton('적용')
         btn_retry = QPushButton('재시도')
         btn_retry.clicked.connect(self.retry)
@@ -194,6 +195,7 @@ class ResultWindow(QWidget):
         hbox_btn = QHBoxLayout()
         hbox_btn.addWidget(btn_back)
         hbox_btn.addStretch(1)
+        hbox_btn.addWidget(btn_exchange)
         hbox_btn.addWidget(btn_apply)
         hbox_btn.addWidget(btn_retry)
 
@@ -215,6 +217,10 @@ class ResultWindow(QWidget):
         self.setLayout(vbox)
         self.setGeometry(300, 300, 600, 400)
         self.show()
+
+    def exchange(self):
+        if not self.resultTableModel.exchangeCheckedMembers():
+            QMessageBox.about(self, "Error", "교체를 위해서는 서로 다른 그룹의 두 인원을 선택하여야합니다.")
 
     def retry(self):
         groups = self.get_paired.cur_symester.make_active_pairs(self.num_group)

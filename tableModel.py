@@ -1,6 +1,5 @@
 from PyQt5.QtCore import QAbstractTableModel
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QMessageBox
 
 
 class MemberTableModel(QAbstractTableModel):
@@ -142,9 +141,10 @@ class ResultTableModel(QAbstractTableModel):
         QAbstractTableModel.__init__(self, parent)
 
         self.groups = groups
-        col = max([len(group) for group in self.groups])
-        row = len(self.groups)
-        self.isChecked = [[False]*col for _ in range(row)]
+        self.col = max([len(group) for group in self.groups])
+        self.row = len(self.groups)
+        self.isChecked = [[False]*self.col for _ in range(self.row)]
+        self.checkedItems = []
 
     def setGroups(self, groups):
         self.layoutAboutToBeChanged.emit()
@@ -175,6 +175,37 @@ class ResultTableModel(QAbstractTableModel):
 
     def itemClicked(self, item):
         self.layoutAboutToBeChanged.emit()
-        self.isChecked[item.column()][item.row()] = \
-            not self.isChecked[item.column()][item.row()]
+        if self.isChecked[item.column()][item.row()]:
+            self.isChecked[item.column()][item.row()] = False
+            self.checkedItems.remove(item)
+        else:
+            self.isChecked[item.column()][item.row()] = True
+            self.checkedItems.append(item)
         self.layoutChanged.emit()
+
+    def exchangeCheckedMembers(self):
+        if len(self.checkedItems) != 2:
+            return False
+        if self._isCheckedMembersInTheSameGroup():
+            return False
+        self.layoutAboutToBeChanged.emit()
+        emptyIndex = [str(item.data()) for item in self.checkedItems].index('')
+        if emptyIndex == -1:
+            self.groups[self.checkedItems[0].column()][self.checkedItems[0].row()], \
+            self.groups[self.checkedItems[1].column()][self.checkedItems[1].row()] = \
+            self.groups[self.checkedItems[1].column()][self.checkedItems[1].row()], \
+            self.groups[self.checkedItems[0].column()][self.checkedItems[0].row()]
+        else:
+            emptyItem = self.checkedItems[emptyIndex]
+            memberItem = self.checkedItems[(emptyIndex+1)%2]
+            self.groups[emptyItem.column()].append(self.groups[memberItem.column()].pop(memberItem.row()))
+        self.isChecked = [[False] * self.col for _ in range(self.row)]
+        self.checkedItems = []
+        self.layoutChanged.emit()
+        return True
+
+    def _isCheckedMembersInTheSameGroup(self):
+        return self.checkedItems[0].column()\
+               == self.checkedItems[1].column()
+
+
