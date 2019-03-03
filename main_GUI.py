@@ -9,11 +9,24 @@ from tableModel import MemberTableModel, ResultTableModel, \
 from PyQt5.QtWidgets \
     import QApplication, QWidget, QLabel, QComboBox, \
     QHBoxLayout, QVBoxLayout, QGridLayout, \
-    QPushButton, QSpinBox, QTableView, QMessageBox
+    QPushButton, QSpinBox, QTableView, QMessageBox, \
+    QDesktopWidget
 from PyQt5 import QtWidgets
 
 
-class InitialWindow(QWidget):
+class MyWindow(QWidget):
+
+    def __init__(self):
+        super().__init__()
+
+    def centerWindow(self):
+        qtRectangle = self.frameGeometry()
+        centerPoint = QDesktopWidget().availableGeometry().center()
+        qtRectangle.moveCenter(centerPoint)
+        self.move(qtRectangle.topLeft())
+
+
+class InitialWindow(MyWindow):
 
     def __init__(self):
         super().__init__()
@@ -61,7 +74,7 @@ class InitialWindow(QWidget):
         vbox.addLayout(hbox_setting)
 
         self.setLayout(vbox)
-        self.setGeometry(300, 300, 300, 150)
+        self.centerWindow()
         self.show()
 
     def mainWindow(self, index):
@@ -70,7 +83,7 @@ class InitialWindow(QWidget):
         self.next = MainWindow(self.get_paired)
 
 
-class MainWindow(QWidget):
+class MainWindow(MyWindow):
 
     def __init__(self, get_paired):
         super().__init__()
@@ -155,6 +168,7 @@ class MainWindow(QWidget):
 
         self.setLayout(vbox)
         self.setGeometry(300, 300, 600, 400)
+        self.centerWindow()
         self.show()
 
     def addAntiMember(self):
@@ -164,7 +178,9 @@ class MainWindow(QWidget):
         members = deepcopy(self.memberTableModel.checkedMembers)
         if not self.antiMemberTableModel.addAntiMember(members):
             QMessageBox.about(self, "Error", "이미 떨어뜨릴 인원에 포함되어 있습니다.")
+            self.memberTableModel.uncheckEveryMember()
             return
+        self.memberTableModel.uncheckEveryMember()
 
     def resultWindow(self):
         self.close()
@@ -173,7 +189,7 @@ class MainWindow(QWidget):
         self.next = ResultWindow(self.get_paired, self.sb_group.value())
 
 
-class ResultWindow(QWidget):
+class ResultWindow(MyWindow):
 
     def __init__(self, get_paired, num_group):
         super().__init__()
@@ -187,6 +203,7 @@ class ResultWindow(QWidget):
         btn_exchange = QPushButton('교체')
         btn_exchange.clicked.connect(self.exchange)
         btn_apply = QPushButton('적용')
+        btn_apply.clicked.connect(self.apply)
         btn_retry = QPushButton('재시도')
         btn_retry.clicked.connect(self.retry)
         btn_back = QPushButton('뒤로')
@@ -216,11 +233,21 @@ class ResultWindow(QWidget):
 
         self.setLayout(vbox)
         self.setGeometry(300, 300, 600, 400)
+        self.centerWindow()
         self.show()
 
     def exchange(self):
         if not self.resultTableModel.exchangeCheckedMembers():
             QMessageBox.about(self, "Error", "교체를 위해서는 서로 다른 그룹의 두 인원을 선택하여야합니다.")
+
+    def apply(self):
+        self.get_paired.cur_symester.update_graph()
+        self.get_paired.cur_symester.print_graph()
+
+        with open('data.pkl', 'wb') as f:
+            pickle.dump(self.get_paired, f)
+
+        self.mainWindow()
 
     def retry(self):
         groups = self.get_paired.cur_symester.make_active_pairs(self.num_group)
@@ -229,6 +256,7 @@ class ResultWindow(QWidget):
     def mainWindow(self):
         self.close()
         self.next = MainWindow(self.get_paired)
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

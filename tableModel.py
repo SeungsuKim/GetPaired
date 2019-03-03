@@ -49,6 +49,12 @@ class MemberTableModel(QAbstractTableModel):
 
         self.layoutChanged.emit()
 
+    def uncheckEveryMember(self):
+        self.layoutAboutToBeChanged.emit()
+        self.isChecked = [False] * len(self.members)
+        self.checkedMembers = []
+        self.layoutChanged.emit()
+
     def removeCheckedMembers(self):
         self.layoutAboutToBeChanged.emit()
         for member in self.checkedMembers:
@@ -189,13 +195,13 @@ class ResultTableModel(QAbstractTableModel):
         if self._isCheckedMembersInTheSameGroup():
             return False
         self.layoutAboutToBeChanged.emit()
-        emptyIndex = [str(item.data()) for item in self.checkedItems].index('')
-        if emptyIndex == -1:
+        if not '' in [str(item.data()) for item in self.checkedItems]:
             self.groups[self.checkedItems[0].column()][self.checkedItems[0].row()], \
             self.groups[self.checkedItems[1].column()][self.checkedItems[1].row()] = \
             self.groups[self.checkedItems[1].column()][self.checkedItems[1].row()], \
             self.groups[self.checkedItems[0].column()][self.checkedItems[0].row()]
         else:
+            emptyIndex = [str(item.data()) for item in self.checkedItems].index('')
             emptyItem = self.checkedItems[emptyIndex]
             memberItem = self.checkedItems[(emptyIndex+1)%2]
             self.groups[emptyItem.column()].append(self.groups[memberItem.column()].pop(memberItem.row()))
