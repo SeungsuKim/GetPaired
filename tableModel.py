@@ -49,6 +49,12 @@ class MemberTableModel(QAbstractTableModel):
 
         self.layoutChanged.emit()
 
+    def addMember(self, member):
+        self.layoutAboutToBeChanged.emit()
+        self.members.append(member)
+        self.isChecked.append(False)
+        self.layoutChanged.emit()
+
     def uncheckEveryMember(self):
         self.layoutAboutToBeChanged.emit()
         self.isChecked = [False] * len(self.members)

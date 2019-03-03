@@ -6,11 +6,12 @@ from copy import deepcopy
 from get_paired import GetPaired
 from tableModel import MemberTableModel, ResultTableModel, \
     AntiMemberTableModel
+from symester import Symester
 from PyQt5.QtWidgets \
     import QApplication, QWidget, QLabel, QComboBox, \
     QHBoxLayout, QVBoxLayout, QGridLayout, \
     QPushButton, QSpinBox, QTableView, QMessageBox, \
-    QDesktopWidget
+    QDesktopWidget, QLineEdit
 from PyQt5 import QtWidgets
 
 
@@ -48,6 +49,7 @@ class InitialWindow(MyWindow):
     def initUI(self):
         lb_new_symester = QLabel('새 학기 시작')
         btn_new_symeser = QPushButton('새 학기')
+        btn_new_symeser.clicked.connect(self.newSymesterWindow)
 
         lb_symester = QLabel('기존 학기 선택')
         cb_symester = QComboBox(self)
@@ -77,8 +79,120 @@ class InitialWindow(MyWindow):
         self.centerWindow()
         self.show()
 
+    def newSymesterWindow(self):
+        self.close()
+        self.next = NewSymesterWindow(self.get_paired)
+
     def mainWindow(self, index):
         self.get_paired.set_cur_symester(index)
+        self.close()
+        self.next = MainWindow(self.get_paired)
+
+
+class NewSymesterWindow(MyWindow):
+
+    def __init__(self, get_paired):
+        super().__init__()
+
+        self.get_paired = get_paired
+        self.symester_name = "새로운 학기명"
+        self.members = []
+
+        self.initUI()
+
+    def initUI(self):
+        self.lb_new_symester = QLabel('새로운 학기명')
+
+        lb_members = QLabel('활동 인원')
+        self.memberTableModel = MemberTableModel(self, self.members)
+        self.memberTable = QTableView()
+        self.memberTable.setModel(self.memberTableModel)
+        self.memberTable.clicked.connect(self.memberTableModel.itemClicked)
+        self.memberTable.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+
+        btn_remove = QPushButton('제거')
+        btn_remove.clicked.connect(self.memberTableModel.removeCheckedMembers)
+
+        hbox_btn_member = QHBoxLayout()
+        hbox_btn_member.addStretch(1)
+        hbox_btn_member.addWidget(btn_remove)
+
+        vbox_member = QVBoxLayout()
+        vbox_member.addWidget(lb_members)
+        vbox_member.addWidget(self.memberTable)
+        vbox_member.addLayout(hbox_btn_member)
+
+        lb_name = QLabel('새학기명')
+        self.tb_name = QLineEdit()
+        self.tb_name.setPlaceholderText("새학기명을 입력하세요")
+        self.tb_name.returnPressed.connect(self.changeName)
+        btn_name = QPushButton('변경')
+        btn_name.clicked.connect(self.changeName)
+
+        hbox_name = QHBoxLayout()
+        hbox_name.addWidget(self.tb_name)
+        hbox_name.addWidget(btn_name)
+
+        lb_member = QLabel('인원 추가')
+        self.tb_member = QLineEdit()
+        self.tb_member.setPlaceholderText("추가할 인원명을 입력하세요")
+        self.tb_member.returnPressed.connect(self.addMember)
+        btn_add = QPushButton('추가')
+        btn_add.clicked.connect(self.addMember)
+
+        hbox_member = QHBoxLayout()
+        hbox_member.addWidget(self.tb_member)
+        hbox_member.addWidget(btn_add)
+
+        btn_done = QPushButton('완료')
+        btn_done.clicked.connect(self.mainWindow)
+
+        vbox_setting = QVBoxLayout()
+        vbox_setting.addWidget(lb_name)
+        vbox_setting.addLayout(hbox_name)
+        #vbox_setting.addStretch(1)
+        vbox_setting.addWidget(lb_member)
+        vbox_setting.addLayout(hbox_member)
+        vbox_setting.addStretch(1)
+        vbox_setting.addWidget(btn_done)
+
+        hbox_main = QHBoxLayout()
+        hbox_main.addLayout(vbox_member)
+        hbox_main.addLayout(vbox_setting)
+
+        vbox_main = QVBoxLayout()
+        vbox_main.addWidget(self.lb_new_symester)
+        vbox_main.addLayout(hbox_main)
+
+        self.setLayout(vbox_main)
+        self.setGeometry(300, 300, 600, 400)
+        self.centerWindow()
+        self.show()
+
+    def changeName(self):
+        name = self.tb_name.text()
+        if name == "":
+            QMessageBox.about(self, "Error", "새학기명을 입력하십시오")
+            return
+        self.symester_name = name
+        self.lb_new_symester.setText(name)
+
+    def addMember(self):
+        member = self.tb_member.text()
+        if member == "":
+            QMessageBox.about(self, "Error", "인원명을 입력하십시오")
+            return
+        self.memberTableModel.addMember(member)
+        self.tb_member.setText("")
+
+    def mainWindow(self):
+        symester = Symester()
+        symester.set_name(self.symester_name)
+        symester.set_members(self.members)
+
+        self.get_paired.add_symester(symester)
+        self.get_paired.set_cur_symester(-1)
+
         self.close()
         self.next = MainWindow(self.get_paired)
 
