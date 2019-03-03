@@ -10,7 +10,7 @@ from PyQt5.QtWidgets \
     import QApplication, QWidget, QMainWindow, QLabel, \
     QComboBox, QHBoxLayout, QVBoxLayout, QGridLayout, \
     QPushButton, QTableWidget, QTableWidgetItem, QSpinBox, \
-    QTableView
+    QTableView, QErrorMessage, QMessageBox
 from PyQt5 import QtCore, QtWidgets
 
 
@@ -160,16 +160,17 @@ class MainWindow(QWidget):
 
     def addAntiMember(self):
         if len(self.memberTableModel.checkedMembers) != 2:
-            err_dialog = QtWidgets.QErrorMessage()
-            err_dialog.showMessage('서로 떨어트릴 인원을 추가하기 위해서는 두 명의 인원을 선택해야합니다.')
-            print("error")
+            QMessageBox.about(self, "Error", "떨어트릴 인원을 추가하기 위해서는 두명의 인원을 선택해야합니다.")
             return
         members = deepcopy(self.memberTableModel.checkedMembers)
-        self.antiMemberTableModel.addAntiMember(members)
+        if not self.antiMemberTableModel.addAntiMember(members):
+            QMessageBox.about(self, "Error", "이미 떨어뜨릴 인원에 포함되어 있습니다.")
+            return
 
     def resultWindow(self):
         self.close()
         self.get_paired.cur_symester.active_members = self.memberTableModel.members
+        self.get_paired.cur_symester.anti_members = self.antiMemberTableModel.antiMembers
         self.next = ResultWindow(self.get_paired, self.sb_group.value())
 
 
@@ -197,6 +198,10 @@ class ResultWindow(QWidget):
         hbox_btn.addWidget(btn_retry)
 
         groups = self.get_paired.cur_symester.make_active_pairs(self.num_group)
+        if groups is None:
+            QMessageBox.about(self, 'Error', '현재 조건으로는 그룹을 나눌 수 없습니다.')
+            self.mainWindow()
+            return
         self.resultTableModel = ResultTableModel(self, groups)
         self.resultTable = QTableView()
         self.resultTable.setModel(self.resultTableModel)

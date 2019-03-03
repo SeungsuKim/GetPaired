@@ -10,6 +10,7 @@ class Symester:
         self.name = ""
         self.members = []
         self.active_members = []
+        self.anti_members = []
         self.graph = nx.Graph()
         self.groups = []
 
@@ -112,24 +113,39 @@ class Symester:
                     distance = 0
                     for node_in_group in group:
                         distance += self.graph.get_edge_data(node, node_in_group)['distance']
-                    if distance < min_distance:
+                    if distance < min_distance and not self.is_anti(group, node):
                         optimal_node = node
                         min_distance = distance
-                self.graph.node[optimal_node]['paired'] = True
-                group.append(optimal_node)
+                if optimal_node != "":
+                    self.graph.node[optimal_node]['paired'] = True
+                    group.append(optimal_node)
+                else:
+                    return None
+
         for node in self._active_unpaired_nodes():
-            optimal_index = 0
+            optimal_index = None
             min_distance = 999999999
             for i, group in enumerate(self.groups):
                 distance = 0
                 for node_in_group in group:
                     distance += self.graph.get_edge_data(node, node_in_group)['distance']
-                if distance < min_distance:
+                if distance < min_distance and not self.is_anti(group, node):
                     optimal_index = i
                     min_distance = distance
-            self.graph.node[node]['paired'] = True
-            self.groups[optimal_index].append(node)
+            if optimal_index is not None:
+                self.graph.node[node]['paired'] = True
+                self.groups[optimal_index].append(node)
+            else:
+                return None
         return self.groups
+
+    def is_anti(self, group, node):
+        for anti_member in self.anti_members:
+            if node in anti_member:
+                another_node = anti_member[(anti_member.index(node)+1)%2]
+                if another_node in group:
+                    return True
+        return False
 
     def _init_graph(self):
         nx.set_node_attributes(self.graph, False, 'paired')
@@ -148,7 +164,6 @@ class Symester:
         for node in self.graph.nodes(data='paired'):
             if not node[1] and node[0] in self.active_members:
                 unpaired_nodes.append(node[0])
-        print(unpaired_nodes)
         return unpaired_nodes
 
     def print_groups(self):

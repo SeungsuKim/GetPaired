@@ -1,5 +1,6 @@
 from PyQt5.QtCore import QAbstractTableModel
 from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QMessageBox
 
 
 class MemberTableModel(QAbstractTableModel):
@@ -104,10 +105,21 @@ class AntiMemberTableModel(QAbstractTableModel):
                 return str(section+1)
 
     def addAntiMember(self, members):
+        if self._isMemberAlreadyExist(members):
+            return False
         self.layoutAboutToBeChanged.emit()
         self.antiMembers.append(members)
         self.isChecked.append(False)
         self.layoutChanged.emit()
+        return True
+
+    def _isMemberAlreadyExist(self, members):
+        for antiMember in self.antiMembers:
+            if members[0] in antiMember:
+                anotherAntiMember = antiMember[(antiMember.index(members[0])+1)%2]
+                if anotherAntiMember == members[1]:
+                    return True
+        return False
 
     def removeAntiMember(self):
         self.layoutAboutToBeChanged.emit()
@@ -122,6 +134,7 @@ class AntiMemberTableModel(QAbstractTableModel):
             self.layoutAboutToBeChanged.emit()
             self.isChecked[item.row()] = not self.isChecked[item.row()]
             self.layoutChanged.emit()
+
 
 class ResultTableModel(QAbstractTableModel):
 
