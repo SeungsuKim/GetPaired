@@ -1,6 +1,5 @@
 import random
 import networkx as nx
-import matplotlib.pyplot as plt
 
 
 class Symester:
@@ -12,6 +11,15 @@ class Symester:
         self.anti_members = []
         self.graph = nx.Graph()
         self.groups = []
+
+    def __str__(self):
+        return self.name
+
+    def reset(self):
+        for edge in self.graph.edges(data=True):
+            print(edge)
+            edge[2]['distance'] = 0
+        self.print_graph()
 
     def set_name(self, name):
         self.name = name
@@ -51,11 +59,11 @@ class Symester:
 
     def get_num_active_members(self):
         return len(self.active_members)
-
+    '''
     def draw_graph(self):
         nx.draw(self.graph, with_labels=True)
         plt.savefig("graph.png")
-
+    '''
     def make_pairs(self, num_group):
         self._init_graph()
 

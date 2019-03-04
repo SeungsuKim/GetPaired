@@ -27,6 +27,14 @@ class GetPaired:
     def set_cur_symester(self, index):
         self.cur_symester = self.symesters[index]
 
+    def remove_symester(self, index):
+        print(self.symesters)
+        self.symesters.pop(index)
+        print(self.symesters)
+
+    def reset_symester(self, index):
+        self.symesters[index].reset()
+
     def print_members(self):
         print(self.cur_symester.members)
 

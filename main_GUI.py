@@ -3,6 +3,7 @@ import sys
 import pickle
 from copy import deepcopy
 
+from s3_utils import upload_file, download_file
 from get_paired import GetPaired
 from tableModel import MemberTableModel, ResultTableModel, \
     AntiMemberTableModel
@@ -13,6 +14,13 @@ from PyQt5.QtWidgets \
     QPushButton, QSpinBox, QTableView, QMessageBox, \
     QDesktopWidget, QLineEdit
 from PyQt5 import QtWidgets
+
+
+def resource_path(relative_path):
+    if hasattr(sys, '_MEIPASS'):
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.abspath('.'), relative_path)
+    #return relative_path
 
 
 class MyWindow(QWidget):
@@ -26,24 +34,48 @@ class MyWindow(QWidget):
         qtRectangle.moveCenter(centerPoint)
         self.move(qtRectangle.topLeft())
 
+    @staticmethod
+    def download_data():
+        download_file(local="data.pkl", remote="data.pkl")
+
+    @staticmethod
+    def upload_data():
+        upload_file(local="data.pkl", remote="data.pkl")
+
 
 class InitialWindow(MyWindow):
 
-    def __init__(self):
+    def __init__(self, get_paired=None):
         super().__init__()
 
-        self.loadData()
+        if get_paired is not None:
+            self.get_paired = get_paired
+            with open(resource_path("data.pkl"), 'wb') as f:
+                pickle.dump(self.get_paired, f)
+                print("Wrote data.pkl")
+            self.upload_data()
+        else:
+            self.loadData()
+
         self.initUI()
 
+    '''
     def loadData(self):
         # If data file does not exists, make new data file.
-        if not os.path.exists("data.pkl"):
-            with open('data.pkl', 'wb') as f:
+        if not os.path.exists(resource_path("data.pkl")):
+            with open(resource_path("data.pkl"), 'wb') as f:
                 self.get_paired = GetPaired()
                 pickle.dump(self.get_paired, f)
 
         # Load GetPaired instance from the data file.
-        with open('data.pkl', 'rb') as f:
+        with open(resource_path("data.pkl"), 'rb') as f:
+            self.get_paired = pickle.load(f)
+    '''
+
+    def loadData(self):
+        self.download_data()
+        with open(resource_path("./data.pkl"), 'rb') as f:
+            f.seek(0)
             self.get_paired = pickle.load(f)
 
     def initUI(self):
@@ -64,6 +96,7 @@ class InitialWindow(MyWindow):
         grid_symester.addWidget(cb_symester, 1, 1)
 
         btn_setting = QPushButton('설정')
+        btn_setting.clicked.connect(self.settingWindow)
 
         hbox_setting = QHBoxLayout()
         hbox_setting.addStretch(1)
@@ -82,6 +115,10 @@ class InitialWindow(MyWindow):
     def newSymesterWindow(self):
         self.close()
         self.next = NewSymesterWindow(self.get_paired)
+
+    def settingWindow(self):
+        self.close()
+        self.next = SettingWindow(self.get_paired)
 
     def mainWindow(self, index):
         self.get_paired.set_cur_symester(index)
@@ -193,8 +230,62 @@ class NewSymesterWindow(MyWindow):
         self.get_paired.add_symester(symester)
         self.get_paired.set_cur_symester(-1)
 
+        with open(resource_path("data.pkl"), 'wb') as f:
+            pickle.dump(self.get_paired, f)
+            print("Wrote data.pkl")
+        self.upload_data()
+
         self.close()
         self.next = MainWindow(self.get_paired)
+
+
+class SettingWindow(MyWindow):
+
+    def __init__(self, get_paired):
+        super().__init__()
+
+        self.get_paired = get_paired
+
+        self.initUI()
+
+    def initUI(self):
+        lb_symester = QLabel("학기 선택")
+        self.cb_symester = QComboBox(self)
+        self.cb_symester.clear()
+        self.cb_symester.addItems(self.get_paired.get_symester_names())
+        btn_remove = QPushButton("삭제")
+        btn_remove.clicked.connect(self.remove)
+        btn_reset = QPushButton("초기화")
+        btn_reset.clicked.connect(self.reset)
+
+        hbox_btn = QHBoxLayout()
+        #hbox_btn.addStretch(1)
+        hbox_btn.addWidget(btn_remove)
+        hbox_btn.addStretch(1)
+        hbox_btn.addWidget(btn_reset)
+
+        vbox_main = QVBoxLayout()
+        vbox_main.addWidget(lb_symester)
+        vbox_main.addWidget(self.cb_symester)
+        vbox_main.addLayout(hbox_btn)
+
+        self.setLayout(vbox_main)
+        self.centerWindow()
+        self.show()
+
+    def remove(self):
+        index = int(self.cb_symester.currentIndex())
+        self.get_paired.remove_symester(index)
+        self.initialWindow()
+
+    def reset(self):
+        index = int(self.cb_symester.currentIndex())
+        self.get_paired.reset_symester(index)
+        self.initialWindow()
+
+    def initialWindow(self):
+        self.close()
+        self.next = InitialWindow(self.get_paired)
 
 
 class MainWindow(MyWindow):
@@ -358,8 +449,10 @@ class ResultWindow(MyWindow):
         self.get_paired.cur_symester.update_graph()
         self.get_paired.cur_symester.print_graph()
 
-        with open('data.pkl', 'wb') as f:
+        with open(resource_path("data.pkl"), 'wb') as f:
             pickle.dump(self.get_paired, f)
+            print("Wrote data.pkl")
+        self.upload_data()
 
         self.mainWindow()
 
